@@ -2,7 +2,6 @@ import socket
 import sys
 import time 
 import httplib
-import psycopg2
 from re import escape
 from datetime import date
 
@@ -15,10 +14,10 @@ class Bot:
 	nicks  =''
 	dsn = ''
 	debug = False
-	database_enabled = False
 	irc = ''
+	logging = False
 
-	def __init__(self,host,channel,nicks, host_name,dsn,debug,database_enabled):
+	def __init__(self,host,channel,nicks, host_name,dsn,debug,logging):
 
 		self.host = host
 		self.channel = channel
@@ -27,8 +26,8 @@ class Bot:
 		self.host_name = host_name
 		self.dsn = dsn
 		self.debug = debug
-		self.database_enabled = database_enabled
-		print self
+		self.logging = logging
+
 
 	def custom_ai(self,text,timestamp):
 		pass
@@ -63,57 +62,10 @@ class Bot:
 		return {'channel':args[0],'handle':prefix.split('@')[0],'text':args[1]}
 	
 	def log_connectivity(self,text):
-
-		conn = psycopg2.connect(self.dsn)
-		cur = conn.cursor()
-		timestamp = str(int(time.time()))
-		cur.execute('INSERT into connectivity_messages (message,timestamp) values (%s,%s) RETURNING id', (text,timestamp))
-		conn.commit()
-		connectivity_id = cur.fetchone()[0]
-		cur.close()
-		conn.close()
-		return connectivity_id
+		pass
 		
 	def archive_message(self,text,timestamp):
-		
-		message = self.parsemsg(text)
-		conn = psycopg2.connect(self.dsn)
-		cur = conn.cursor()
-		cur.execute('select id,name from channels where name = %s', (message['channel'],))
-		rows = cur.fetchall()
-
-		handle_id = None
-		channel_id = None
-
-		if len(rows) == 1:
-			for row in rows:
-				channel_id = row[0]
-	
-		else:
-			cur.execute('INSERT into channels (name) values (%s) RETURNING id', (message['channel'],))
-			channel_id = cur.fetchone()[0]
-			conn.commit()
-
-
-		cur.execute('SELECT id,handle from handles where handle = %s', (message['handle'],))
-		rows = cur.fetchall()
-
-		if len(rows) == 1:
-			for row in rows:
-				handle_id = row[0]
-
-		else:
-			cur.execute('INSERT INTO handles (handle) values (%s) RETURNING id' , (message['handle'],))
-			handle_id = cur.fetchone()[0]
-			conn.commit()
-
-		sql = 'INSERT INTO messages (handle_id,channel_id,timestamp,message) values (%s,%s,%s,%s)'
-
-		cur.execute(sql,(handle_id,channel_id,timestamp,message['text']))
-		conn.commit()
-		cur.close()
-		conn.close()
-	
+		pass
      
 	def sendm(self,msg): 
 		text = 'PRIVMSG '+ self.channel + ' :' + str(msg) + '\r\n'
@@ -161,7 +113,7 @@ class Bot:
 			if len(images) < 1:
 				self.sendm('[+] Error ! Wrote : !image world')
 			else:
-				self.sendm('[+] images url : http://images.google.com/images?um=1&hl=ru&q='+ images +'&btnG')
+				self.sendm('[+] images url : http://images.google.com/images?um=1&q='+ images +'&btnG')
 		
 		if text.find(':!newyear') != -1:
 			now = date.today()
@@ -184,7 +136,8 @@ class Bot:
 			try:
 				text = self.irc.recv(2040)
 				timestamp = int(time.time()) 
-				if text.find('PRIVMSG') != -1 and self.database_enabled:
+
+				if text.find('PRIVMSG') != 1 and self.logging:
 					self.archive_message(text,timestamp)
 					self.log_connectivity(text)
 				if not text:
