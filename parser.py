@@ -6,7 +6,7 @@ from datetime import date
 class IRC_Parser:
 
 	def __init__(self):
-		self.dsn = "host=localhost dbname=ircbot user=ircman password="
+		self.dsn = "host=localhost dbname=ircbot user=ircman password=2much20ften"
 
 	def get_messages(self):
 		conn = psycopg2.connect(self.dsn)
@@ -83,5 +83,11 @@ for row in rows:
 	if row[1].find('PRIVMSG') != -1:
 		print row
 		parser.archive_message(row[1],row[2])
+		#channel = message[2][0]
+		#user_text = message[2][1]
+		#user_info =  message[0].split('@')
+		#handle = user_info[0]
+
+		#print 'Channel : ' + channel + ' Handle: ' + handle + ' Text: ' + user_text
 
 

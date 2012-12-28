@@ -6,28 +6,25 @@ from re import escape
 from datetime import date
 
 
-class Bot:
+class Bot(object):
 	
 	host = ''
 	channel = ''
 	password = ''
 	nicks  =''
-	dsn = ''
-	debug = False
 	irc = ''
-	logging = False
+	debug = False
+	loging = False
 
-	def __init__(self,host,channel,nicks, host_name,dsn,debug,logging):
+	def __init__(self,host,channel,password,nicks,host_name,debug,log):
 
 		self.host = host
 		self.channel = channel
 		self.password = password
 		self.nicks = nicks
 		self.host_name = host_name
-		self.dsn = dsn
 		self.debug = debug
-		self.logging = logging
-
+		self.log= log
 
 	def custom_ai(self,text,timestamp):
 		pass
@@ -44,32 +41,36 @@ class Bot:
 
  	def parsemsg(self,s):
 		"""Breaks a message from an IRC server into its prefix, command, and arguments."""
-		prefix = ''
-		trailing = []
-		if not s:
-			raise IRCBadMessage("Empty line.")
-		if s[0] == ':':
-			prefix, s = s[1:].split(' ', 1)
+		try:
+			prefix = ''
+			trailing = []
+			if not s:
+				raise IRCBadMessage("Empty line.")
+			if s[0] == ':':
+				prefix, s = s[1:].split(' ', 1)
 
-		if s.find(' :') != -1:
-			s, trailing = s.split(' :', 1)
-			args = s.split()
-			args.append(trailing)
-		else:
-			args = s.split()
-		command = args.pop(0)
+			if s.find(' :') != -1:
+				s, trailing = s.split(' :', 1)
+				args = s.split()
+				args.append(trailing)
+			else:
+				args = s.split()
+			command = args.pop(0)
 				
-		return {'channel':args[0],'handle':prefix.split('@')[0],'text':args[1]}
+			return {'channel':args[0],'handle':prefix.split('@')[0],'text':args[1]}
+
+		except:
+			return None
 	
 	def log_connectivity(self,text):
 		pass
 		
 	def archive_message(self,text,timestamp):
 		pass
-     
+		
 	def sendm(self,msg): 
 		text = 'PRIVMSG '+ self.channel + ' :' + str(msg) + '\r\n'
-		if self.database_enabled:
+		if self.log:
 			timestamp = int(time.time()) 
 			self.archive_message(text,timestamp)
 		self.irc.send(text)
@@ -100,12 +101,6 @@ class Bot:
 			devoices = devoice[1].strip()
 			self.irc.send('MODE '+ str(channel) +' -v '+ str(devoices) +'\r\n')
 		
-			"""if text.find(':!topic') != -1:
-					topi = text.split(':!topic')
-					topic = topi[1].strip()
-					self.irc.send('TOPIC #DragStyle^ :'+ str(topic) +'\r\n')
-					if topic == topic:
-						self.sendm('[+] Topic change')"""
 		
 		if text.find(':!image') != -1:
 			image = text.split(':!image')
@@ -113,7 +108,7 @@ class Bot:
 			if len(images) < 1:
 				self.sendm('[+] Error ! Wrote : !image world')
 			else:
-				self.sendm('[+] images url : http://images.google.com/images?um=1&q='+ images +'&btnG')
+				self.sendm('[+] images url : http://images.google.com/images?&q='+ images +'&btnG')
 		
 		if text.find(':!newyear') != -1:
 			now = date.today()
@@ -136,8 +131,7 @@ class Bot:
 			try:
 				text = self.irc.recv(2040)
 				timestamp = int(time.time()) 
-
-				if text.find('PRIVMSG') != 1 and self.logging:
+				if text.find('PRIVMSG') != -1 and self.log:
 					self.archive_message(text,timestamp)
 					self.log_connectivity(text)
 				if not text:
