@@ -16,7 +16,7 @@ class Bot(object):
 	debug = False
 	loging = False
 
-	def __init__(self,host,channel,password,nicks,host_name,debug,log):
+	def __init__(self,host,channel,password,nicks,host_name,debug,log,hidden):
 
 		self.host = host
 		self.channel = channel
@@ -25,6 +25,8 @@ class Bot(object):
 		self.host_name = host_name
 		self.debug = debug
 		self.log= log
+		self.hidden = hidden
+		self.logged_in = False
 
 	def custom_ai(self,text,timestamp):
 		pass
@@ -139,9 +141,16 @@ class Bot(object):
 
 				if self.debug:
 					print text
-		
-				if text.find('Message of the Day') != -1:
-					self.irc.send('JOIN '+ self.channel +'\r\n')
+
+				if self.hidden:
+					if text.find('is now your hidden host') != -1:
+						self.irc.send('JOIN '+ self.channel +'\r\n')
+						self.logged_in = True
+						
+				else:
+					if text.find('Message of the Day') != -1:
+						self.irc.send('JOIN '+ self.channel +'\r\n')
+						self.logged_in = True
 
 				if text.find('+iwR') != -1:
 					self.irc.send('NickServ IDENTIFY '+ str(self.nicks) + ' ' + str(self.password) +'\r\n')

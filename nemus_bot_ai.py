@@ -106,8 +106,9 @@ class NemusBotAI(Bot):
 					self.sheep = True
 					self.sendm('Sheep Paging Enabled');
 
-			if parsed_msg['text'].lower().find('nemus') != -1 and (parsed_msg['channel'].lower().find('#dc801') != -1 or parsed_msg['channel'].find(self.nicks) != -1) != -1:
-				self.send_email(parsed_msg,self.page_number,"dc801-irc@obscuritysystems.com",parsed_msg['channel'])
+			if self.logged_in:
+				if parsed_msg['text'].lower().find('nemus') != -1 and (parsed_msg['channel'].lower().find('#dc801') != -1 or parsed_msg['channel'].find(self.nicks) != -1) != -1:
+					self.send_email(parsed_msg,self.page_number,"dc801-irc@obscuritysystems.com",parsed_msg['channel'])
 
 	def send_email(self,parsed_msg,TO,FROM,SUBJECT):
 		TEXT = parsed_msg['handle'] + ' : ' + parsed_msg['text']
@@ -125,5 +126,5 @@ Subject: %s
 		smtp_server_obj.sendmail(FROM,TO,message)
 		smtp_server_obj.quit()
 
-#bot = NemusBotAI()
-#bot.run()
+bot = NemusBotAI()
+bot.run()
