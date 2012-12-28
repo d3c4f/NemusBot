@@ -11,7 +11,7 @@ class NemusBotAI(Bot):
 	def __init__(self):
 		
 		config = ConfigParser.RawConfigParser()
-		config.read('/opt/python/nemus_bot/rev/NemusBot/nemus_bot.cfg')	
+		config.read('/etc/nemusbot/nemus_bot.cfg')	
 
 		host 		= config.get('Bot','host')
 		channel 	= config.get('Bot','channel')
@@ -20,6 +20,7 @@ class NemusBotAI(Bot):
 		hostname 	= config.get('Bot','hostname')
 		debug 		= config.getboolean('Bot','debug')
 		log 		= config.getboolean('Bot','log')
+		hidden 		= config.getboolean('Bot','hidden')
 
 		self.dsn 			= config.get('Database','dsn')
 		self.sheep 			= config.getboolean('Sheep','enabled')
@@ -28,7 +29,7 @@ class NemusBotAI(Bot):
 		self.smtp_server 	= config.get('SMTP','ip')
 		self.page_number 	= config.get('Page','number')
 
-		super(NemusBotAI,self).__init__(host,channel,password,nicks,hostname,debug,log)
+		super(NemusBotAI,self).__init__(host,channel,password,nicks,hostname,debug,log,hidden)
 	
 
 	def log_connectivity(self,text):
