@@ -4,6 +4,9 @@ import re
 import psycopg2
 import time 
 import ConfigParser
+import pycurl
+import json
+import StringIO
 
 
 class NemusBotAI(Bot):
@@ -84,14 +87,42 @@ class NemusBotAI(Bot):
 		cur.close()
 		conn.close()
 
+	def mtgox(self):
+		c = pycurl.Curl()
+		c.setopt(c.URL, 'http://bitcoincharts.com/t/markets.json?symbol=mtgoxUSD')
+		c.setopt(c.CONNECTTIMEOUT, 5)
+		c.setopt(pycurl.FOLLOWLOCATION, 1)
+		c.setopt(c.TIMEOUT, 8)
+		b = StringIO.StringIO()
+		c.setopt(c.COOKIEFILE, '')
+		c.setopt(c.FAILONERROR, True)
+		c.setopt(c.HTTPHEADER, ['Accept: application/json', 'Content-Type: application/x-www-form-urlencoded'])
+		c.setopt(pycurl.WRITEFUNCTION, b.write)
+		try:
+  			c.perform()
+  			bitcoin_data = json.loads(b.getvalue())
+  			mtgox = bitcoin_data[84]
+  			msg = ''
+			for (key, value) in mtgox.items():
+				msg += str(key) + ":" + str(value) + " "
+
+  			return msg
+
+ 
+		except pycurl.error, error:
+			errno, errstr = error
+			print 'An error occurred: ', errstr
+
 	def custom_ai(self,text,timestamp):
 		
 	 	parsed_msg = self.parsemsg(text)
 		if text.find(':!penetrate') != -1:
 			self.sendm("Bah Bah Bah -('')- ")
 
-		if text.find (':!fight') != -1:
-			self.sendm(parsed_msg['handle'].split('!~')[0] +'has started a fight with ')
+		#if text.find (':!fight') != -1:
+		#	self.sendm(parsed_msg['handle'].split('!~')[0] +'has started a fight with ')
+		if text.find (':!mtgox') != -1:
+			self.sendm(self.mtgox())
 
 
 		if parsed_msg is not None:
