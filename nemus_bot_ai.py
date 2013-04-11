@@ -28,6 +28,7 @@ class NemusBotAI(Bot):
 		self.sheep_regex 	= config.get('Sheep','regex')
 		self.smtp_server 	= config.get('SMTP','ip')
 		self.page_number 	= config.get('Page','number')
+		self.logged_in		= False
 
 		super(NemusBotAI,self).__init__(host,channel,password,nicks,hostname,debug,log,hidden)
 	
@@ -86,6 +87,12 @@ class NemusBotAI(Bot):
 	def custom_ai(self,text,timestamp):
 		
 	 	parsed_msg = self.parsemsg(text)
+		if text.find(':!penetrate') != -1:
+			self.sendm("Bah Bah Bah -('')- ")
+
+		if text.find (':!fight') != -1:
+			self.sendm(parsed_msg['handle'].split('!~')[0] +'has started a fight with ')
+
 
 		if parsed_msg is not None:
 
@@ -105,10 +112,10 @@ class NemusBotAI(Bot):
 				else:
 					self.sheep = True
 					self.sendm('Sheep Paging Enabled');
-
 			if self.logged_in:
 				if parsed_msg['text'].lower().find('nemus') != -1 and (parsed_msg['channel'].lower().find('#dc801') != -1 or parsed_msg['channel'].find(self.nicks) != -1) != -1:
-					self.send_email(parsed_msg,self.page_number,"dc801-irc@obscuritysystems.com",parsed_msg['channel'])
+					pass
+					#self.send_email(parsed_msg,self.page_number,"dc801-irc@obscuritysystems.com",parsed_msg['channel'])
 
 	def send_email(self,parsed_msg,TO,FROM,SUBJECT):
 		TEXT = parsed_msg['handle'] + ' : ' + parsed_msg['text']
@@ -126,5 +133,5 @@ Subject: %s
 		smtp_server_obj.sendmail(FROM,TO,message)
 		smtp_server_obj.quit()
 
-bot = NemusBotAI()
-bot.run()
+#bot = NemusBotAI()
+#bot.run()

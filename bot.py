@@ -13,7 +13,7 @@ class Bot(object):
 	password = ''
 	nicks  =''
 	irc = ''
-	debug = False
+	debug = True
 	loging = False
 
 	def __init__(self,host,channel,password,nicks,host_name,debug,log,hidden):
@@ -27,6 +27,9 @@ class Bot(object):
 		self.log= log
 		self.hidden = hidden
 		self.logged_in = False
+		self.ping_time = 0
+		self.running = True
+		self.connected = False
 
 	def custom_ai(self,text,timestamp):
 		pass
@@ -69,6 +72,8 @@ class Bot(object):
 		
 	def archive_message(self,text,timestamp):
 		pass
+	def commands(self):
+		pass
 		
 	def sendm(self,msg): 
 		text = 'PRIVMSG '+ self.channel + ' :' + str(msg) + '\r\n'
@@ -79,7 +84,8 @@ class Bot(object):
 
 	def bot_ai(self,text,timestamp):
 	
-		if text.find(':KICK') != 1:
+		if text.find('KICK ' +self.channel) != -1:
+			print "KICK"
 			self.irc.send('JOIN '+ self.channel +'\r\n')
 		
 		if text.find(':!date') != -1:
@@ -96,13 +102,12 @@ class Bot(object):
 		if text.find(':!voice') != -1:
 			voice = text.split(':!voice')
 			voices = voice[1].strip()
-			self.irc.send('MODE '+ str(channel) +' +v '+ str(voices) +'\r\n')
+			self.irc.send('MODE '+ str(self.channel) +' +v '+ str(voices) +'\r\n')
 
 		if text.find(':!devoice') != -1:
 			devoice = text.split(':!devoice')
 			devoices = devoice[1].strip()
-			self.irc.send('MODE '+ str(channel) +' -v '+ str(devoices) +'\r\n')
-		
+			self.irc.send('MODE '+ str(self.channel) +' -v '+ str(devoices) +'\r\n')
 		
 		if text.find(':!image') != -1:
 			image = text.split(':!image')
@@ -111,61 +116,79 @@ class Bot(object):
 				self.sendm('[+] Error ! Wrote : !image world')
 			else:
 				self.sendm('[+] images url : http://images.google.com/images?&q='+ images +'&btnG')
+		if text.find('!:commands') != -1:
+			self.commands();
 		
 		if text.find(':!newyear') != -1:
 			now = date.today()
-			newyear = date(2009, 12, 31)
+			newyear = date(2013, 12, 31)
 			cik = now - newyear
 			newyears = cik.days
 			self.sendm('[+] .. ...... .... ........ :'+ str(newyears) +' .... =)')
 	
 	def run(self):
 
-		self.irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
-		self.irc.connect((self.host, 6667)) 
+		#self.irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+		#self.irc.connect((self.host, 6667)) 
 
-		self.irc.send('USER '+self.nicks+' host '+self.host_name+' : Nemus Brand Bot\r\n') 
-		self.irc.send('NICK '+ str(self.nicks) +'\r\n')
-		self.irc.send('NickServ IDENTIFY '+ str(self.nicks) + ' ' + str(self.password) +'\r\n')
+		#self.irc.send('USER '+self.nicks+' host '+self.host_name+' : Nemus Brand Bot\r\n') 
+		#self.irc.send('NICK '+ str(self.nicks) +'\r\n')
+		#self.irc.send('NickServ IDENTIFY '+ str(self.nicks) + ' ' + str(self.password) +'\r\n')
+		#self.connected = True
+		
+		while self.running:
+			#set ping time so that we don't loop
+			self.ping_time = int(time.time())
+			self.irc = socket.socket(socket.AF_INET, socket.SOCK_STREAM) 
+			#self.irc.setblocking(0)
+			self.irc.settimeout(240)
+			self.irc.connect((self.host, 6667)) 
 
-		while 1:	
+			self.irc.send('USER '+self.nicks+' host '+self.host_name+' : Nemus Brand Bot\r\n') 
+			self.irc.send('NICK '+ str(self.nicks) +'\r\n')
+			self.irc.send('NickServ IDENTIFY '+ str(self.nicks) + ' ' + str(self.password) +'\r\n')
+			self.connected = True
+		
+			while self.connected:	
+				#print 'connected'
+				try:
+					timestamp = int(time.time()) 
 
-			try:
-				text = self.irc.recv(2040)
-				timestamp = int(time.time()) 
-				if text.find('PRIVMSG') != -1 and self.log:
-					self.archive_message(text,timestamp)
-					self.log_connectivity(text)
-				if not text:
-					break
+					text = self.irc.recv(2040)
 
-				if self.debug:
-					print text
+					if text.find('PRIVMSG') != -1 and self.log:
+						self.archive_message(text,timestamp)
+						self.log_connectivity(text)
+					if not text:
+						break
 
-				if self.hidden:
-					if text.find('is now your hidden host') != -1:
-						self.irc.send('JOIN '+ self.channel +'\r\n')
-						self.logged_in = True
+					if self.debug:
+						print text
+
+					if self.hidden:
+						if text.find('is now your hidden host') != -1:
+							self.irc.send('JOIN '+ self.channel +'\r\n')
+							self.logged_in = True
 						
-				else:
-					if text.find('Message of the Day') != -1:
-						self.irc.send('JOIN '+ self.channel +'\r\n')
-						self.logged_in = True
+					else:
+						if text.find('Message of the Day') != -1:
+							self.irc.send('JOIN '+ self.channel +'\r\n')
+							self.logged_in = True
 
-				if text.find('+iwR') != -1:
-					self.irc.send('NickServ IDENTIFY '+ str(self.nicks) + ' ' + str(self.password) +'\r\n')
+					if text.find('+iwR') != -1:
+						self.irc.send('NickServ IDENTIFY '+ str(self.nicks) + ' ' + str(self.password) +'\r\n')
                            
-				if text.find('PING') != -1:
-					print 'PONG ' + text.split() [1] + '\r\n'
-					self.irc.send('PONG ' + text.split() [1] + '\r\n')
+					if text.find('PING') != -1:
+						self.irc.send('PONG ' + text.split() [1] + '\r\n')
 
-				self.bot_ai(text,timestamp)
-				self.custom_ai(text,timestamp);
+					self.bot_ai(text,timestamp)
+					self.custom_ai(text,timestamp);
 
 	
-			except Exception, err:
-				import traceback, os.path
-				traceback.print_exc(err)
-				print err
-				pass
+				except Exception, err:
+					import traceback, os.path
+					traceback.print_exc(err)
+					self.connected = False
+					#print err
+					pass
 	
